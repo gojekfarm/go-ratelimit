@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"go-ratelimit/config"
 	"testing"
 
 	"github.com/garyburd/redigo/redis"
@@ -11,12 +12,26 @@ import (
 
 type RateLimitSuite struct {
 	suite.Suite
-	redisPool *redis.Pool
+	redisPool   *redis.Pool
+	redisConfig *config.RateLimitConfig
+}
+
+func testRedisPool() *redis.Pool {
+	return &redis.Pool{
+		Dial: func() (redis.Conn, error) {
+			c, err := redis.Dial("tcp", "localhost:6379")
+			if err != nil {
+				return nil, err
+			}
+
+			return c, err
+		},
+	}
 }
 
 func (suite *RateLimitSuite) SetupSuite() {
-	config.Load()
-	suite.redisPool = repo.LoadRedisPool()
+	suite.redisConfig = config.NewRateLimitConfig(3, 15, 60)
+	suite.redisPool = testRedisPool()
 }
 
 func (suite *RateLimitSuite) TearDownSuite() {
@@ -24,7 +39,8 @@ func (suite *RateLimitSuite) TearDownSuite() {
 }
 
 func (suite *RateLimitSuite) SetupTest() {
-	tu.CleanRedis(suite.redisPool)
+	conn := suite.redisPool.Get()
+	conn.Do("FLUSHALL")
 }
 
 func TestRateLimitSuite(t *testing.T) {
@@ -32,10 +48,10 @@ func TestRateLimitSuite(t *testing.T) {
 }
 
 func (suite *RateLimitSuite) TestWhenKeyDoesNotExists() {
-	config.Load()
-	redisPool := repo.LoadRedisPool()
+	redisPool := suite.redisPool
+	redisConfig := suite.redisConfig
 
-	rl := RateLimit{RedisPool: redisPool}
+	rl := RateLimit{redisPool: redisPool, config: suite.redisConfig}
 
 	err := rl.Run("foo")
 	require.NoError(suite.T(), err, "should not fail to rate limit")
@@ -49,17 +65,17 @@ func (suite *RateLimitSuite) TestWhenKeyDoesNotExists() {
 
 	require.NotNil(suite.T(), result)
 	assert.Equal(suite.T(), 1, result)
-	assert.Equal(suite.T(), config.RateLimit().CustomerLoginWindowInMinutes()*60, expiry)
+	assert.Equal(suite.T(), redisConfig.WindowInMinutes*60, expiry)
 }
 
 func (suite *RateLimitSuite) TestKeyExistsAndAttemptIsValid() {
-	config.Load()
-	redisPool := repo.LoadRedisPool()
+	redisPool := suite.redisPool
+	redisConfig := suite.redisConfig
 
-	rl := RateLimit{RedisPool: redisPool}
+	rl := RateLimit{redisPool: redisPool, config: suite.redisConfig}
 
 	var err error
-	allowedLoginAttempts := config.RateLimit().CustomerLoginAttempts()
+	allowedLoginAttempts := redisConfig.Attempts
 
 	for i := 0; i < allowedLoginAttempts; i++ {
 		err = rl.Run("foo")
@@ -75,13 +91,13 @@ func (suite *RateLimitSuite) TestKeyExistsAndAttemptIsValid() {
 }
 
 func (suite *RateLimitSuite) TestKeyExistsAndJustExceededAttemptThreshold() {
-	config.Load()
-	redisPool := repo.LoadRedisPool()
+	redisPool := suite.redisPool
+	redisConfig := suite.redisConfig
 
-	rl := RateLimit{RedisPool: redisPool}
+	rl := RateLimit{redisPool: redisPool, config: suite.redisConfig}
 
 	var err error
-	allowedLoginAttempts := config.RateLimit().CustomerLoginAttempts()
+	allowedLoginAttempts := redisConfig.Attempts
 
 	for i := 0; i < allowedLoginAttempts; i++ {
 		err = rl.Run("foo")
@@ -95,13 +111,13 @@ func (suite *RateLimitSuite) TestKeyExistsAndJustExceededAttemptThreshold() {
 }
 
 func (suite *RateLimitSuite) TestKeyExistsAndHasWayExceededAttemptThreshold() {
-	config.Load()
-	redisPool := repo.LoadRedisPool()
+	redisPool := suite.redisPool
+	redisConfig := suite.redisConfig
 
-	rl := RateLimit{RedisPool: redisPool}
+	rl := RateLimit{redisPool: redisPool, config: suite.redisConfig}
 
 	var err error
-	allowedLoginAttempts := config.RateLimit().CustomerLoginAttempts()
+	allowedLoginAttempts := redisConfig.Attempts
 
 	for i := 0; i < allowedLoginAttempts+1; i++ {
 		err = rl.Run("foo")
