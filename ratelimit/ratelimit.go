@@ -7,13 +7,16 @@ import (
 	"github.com/garyburd/redigo/redis"
 )
 
+// ErrBlocked is returned when ratelimiting kicks in
 var ErrBlocked = errors.New("rate limit: blocked")
 
+// RateLimit Primary struct for ratelimiting
 type RateLimit struct {
 	redisPool *redis.Pool
 	config    *config.RateLimitConfig
 }
 
+// NewRateLimit Construction of RateLimit using RedisPool and Config
 func NewRateLimit(redisPool *redis.Pool, config *config.RateLimitConfig) *RateLimit {
 	return &RateLimit{
 		redisPool: redisPool,
@@ -21,6 +24,7 @@ func NewRateLimit(redisPool *redis.Pool, config *config.RateLimitConfig) *RateLi
 	}
 }
 
+// Run applies ratelimiting to the key provided
 func (rl *RateLimit) Run(key string) error {
 	conn := rl.redisPool.Get()
 	defer conn.Close()

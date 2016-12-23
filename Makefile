@@ -25,7 +25,7 @@ vet:
 lint:
 	@for p in $(UNIT_TEST_PACKAGES); do \
 		echo "==> Linting $$p"; \
-		golint $$p | { grep -vwE "exported (var|function|method|type|const) \S+ should have comment" || true; } \
+		golint -set_exit_status $$p; \
 	done
 
 test:
