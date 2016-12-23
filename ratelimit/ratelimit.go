@@ -14,6 +14,13 @@ type RateLimit struct {
 	config    *config.RateLimitConfig
 }
 
+func NewRateLimit(redisPool *redis.Pool, config *config.RateLimitConfig) *RateLimit {
+	return &RateLimit{
+		redisPool: redisPool,
+		config:    config,
+	}
+}
+
 func (rl *RateLimit) Run(key string) error {
 	conn := rl.redisPool.Get()
 	defer conn.Close()
