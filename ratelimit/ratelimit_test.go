@@ -65,7 +65,7 @@ func (suite *RateLimitSuite) TestWhenKeyDoesNotExists() {
 
 	require.NotNil(suite.T(), result)
 	assert.Equal(suite.T(), 1, result)
-	assert.Equal(suite.T(), redisConfig.WindowInMinutes*60, expiry)
+	assert.Equal(suite.T(), redisConfig.WindowInSeconds, expiry)
 }
 
 func (suite *RateLimitSuite) TestKeyExistsAndAttemptIsValid() {

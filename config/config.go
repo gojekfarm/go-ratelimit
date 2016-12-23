@@ -2,14 +2,14 @@ package config
 
 type RateLimitConfig struct {
 	Attempts          int
-	WindowInMinutes   int
-	CooldownInMinutes int
+	WindowInSeconds   int
+	CooldownInSeconds int
 }
 
-func NewRateLimitConfig(attempts, windowInMinutes, cooldownInMinutes int) *RateLimitConfig {
+func NewRateLimitConfig(attempts, windowInSeconds, cooldownInSeconds int) *RateLimitConfig {
 	return &RateLimitConfig{
 		Attempts:          attempts,
-		WindowInMinutes:   windowInMinutes,
-		CooldownInMinutes: cooldownInMinutes,
+		WindowInSeconds:   windowInSeconds,
+		CooldownInSeconds: cooldownInSeconds,
 	}
 }

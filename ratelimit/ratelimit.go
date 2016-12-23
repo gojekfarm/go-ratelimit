@@ -31,7 +31,7 @@ func (rl *RateLimit) Run(key string) error {
 	}
 
 	if value == 0 {
-		return initializeCounterForKey(key, conn, rl.config.WindowInMinutes*60)
+		return initializeCounterForKey(key, conn, rl.config.WindowInSeconds)
 	}
 
 	if value < rl.config.Attempts {
@@ -39,7 +39,7 @@ func (rl *RateLimit) Run(key string) error {
 	}
 
 	if value == rl.config.Attempts {
-		return initializeCooldownWindowForKey(key, conn, rl.config.CooldownInMinutes*60)
+		return initializeCooldownWindowForKey(key, conn, rl.config.CooldownInSeconds)
 	}
 
 	return ErrBlocked
