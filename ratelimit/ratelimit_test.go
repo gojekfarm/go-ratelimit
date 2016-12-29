@@ -128,3 +128,36 @@ func (suite *RateLimitSuite) TestKeyExistsAndHasWayExceededAttemptThreshold() {
 
 	assert.Equal(suite.T(), ErrBlocked, err)
 }
+
+func (suite *RateLimitSuite) TestRateLimitNotExceeded() {
+	redisPool := suite.redisPool
+	redisConfig := suite.redisConfig
+
+	rl := RateLimit{redisPool: redisPool, config: redisConfig}
+
+	key := "test_key"
+
+	assert.False(suite.T(), rl.RateLimitExceeded(key))
+
+	initializeCounterForKey(key, redisPool.Get(), 2)
+	incrementCounterForKey(key, redisPool.Get())
+	incrementCounterForKey(key, redisPool.Get())
+
+	assert.False(suite.T(), rl.RateLimitExceeded(key))
+}
+
+func (suite *RateLimitSuite) TestRateLimitExceeded() {
+	redisPool := suite.redisPool
+	redisConfig := suite.redisConfig
+
+	rl := RateLimit{redisPool: redisPool, config: redisConfig}
+
+	key := "test_key"
+
+	initializeCounterForKey(key, redisPool.Get(), 2)
+	incrementCounterForKey(key, redisPool.Get())
+	incrementCounterForKey(key, redisPool.Get())
+	incrementCounterForKey(key, redisPool.Get())
+
+	assert.True(suite.T(), rl.RateLimitExceeded(key))
+}

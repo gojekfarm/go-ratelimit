@@ -49,6 +49,23 @@ func (rl *RateLimit) Run(key string) error {
 	return ErrBlocked
 }
 
+// RateLimitExceeded returns state of RateLimit for a key provided
+func (rl *RateLimit) RateLimitExceeded(key string) bool {
+	conn := rl.redisPool.Get()
+	defer conn.Close()
+
+	value, err := redis.Int(conn.Do("GET", key))
+	if err != nil {
+		return false
+	}
+
+	if value > rl.config.Attempts {
+		return true
+	}
+
+	return false
+}
+
 func initializeCounterForKey(key string, conn redis.Conn, ttl int) error {
 	if _, err := conn.Do("SET", key, 1); err != nil {
 		return err
