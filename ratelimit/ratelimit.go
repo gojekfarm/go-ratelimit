@@ -10,6 +10,12 @@ import (
 // ErrBlocked is returned when ratelimiting kicks in
 var ErrBlocked = errors.New("rate limit: blocked")
 
+// RateLimiter interface which every RateLimit needs to implement
+type RateLimiter interface {
+	Run(key string) error
+	RateLimitExceeded(key string) bool
+}
+
 // RateLimit Primary struct for ratelimiting
 type RateLimit struct {
 	redisPool *redis.Pool
