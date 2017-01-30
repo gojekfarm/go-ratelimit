@@ -14,6 +14,7 @@ var ErrBlocked = errors.New("rate limit: blocked")
 type RateLimiter interface {
 	Run(key string) error
 	RateLimitExceeded(key string) bool
+	Reset(key string) error
 }
 
 // RateLimit Primary struct for ratelimiting
@@ -70,6 +71,18 @@ func (rl *RateLimit) RateLimitExceeded(key string) bool {
 	}
 
 	return false
+}
+
+func (rl *RateLimit) Reset(key string) error {
+	conn := rl.redisPool.Get()
+	defer conn.Close()
+
+	_, err := conn.Do("DEL", key)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func initializeCounterForKey(key string, conn redis.Conn, ttl int) error {

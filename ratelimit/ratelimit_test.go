@@ -161,3 +161,26 @@ func (suite *RateLimitSuite) TestRateLimitExceeded() {
 
 	assert.True(suite.T(), rl.RateLimitExceeded(key))
 }
+
+func (suite *RateLimitSuite) TestResetRateLimit() {
+	redisPool := suite.redisPool
+	redisConfig := suite.redisConfig
+
+	rl := RateLimit{redisPool: redisPool, config: redisConfig}
+
+	key := "test_key"
+
+	assert.False(suite.T(), rl.RateLimitExceeded(key))
+
+	initializeCounterForKey(key, redisPool.Get(), 2)
+
+	for i := 0; i < suite.redisConfig.Attempts; i++ {
+		incrementCounterForKey(key, redisPool.Get())
+	}
+
+	require.True(suite.T(), rl.RateLimitExceeded(key))
+
+	rl.Reset(key)
+
+	assert.False(suite.T(), rl.RateLimitExceeded(key))
+}
