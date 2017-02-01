@@ -1,13 +1,13 @@
 package config
 
-// RateLimitConfig Config object for RateLimiting
+// RateLimitConfig type for setting rate limiting params
 type RateLimitConfig struct {
 	Attempts          int
 	WindowInSeconds   int
 	CooldownInSeconds int
 }
 
-// NewRateLimitConfig Construct config for RateLimiting
+// NewRateLimitConfig to create a new config for rate limiting
 func NewRateLimitConfig(attempts, windowInSeconds, cooldownInSeconds int) *RateLimitConfig {
 	return &RateLimitConfig{
 		Attempts:          attempts,

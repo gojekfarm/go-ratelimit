@@ -1,6 +1,4 @@
-## Go RateLimit
-### A utility to perform rate limiting in golang using redis backend
-
+# ratelimit
 --
     import "go-ratelimit/ratelimit"
 
@@ -17,19 +15,19 @@ type RateLimitConfig struct {
 }
 ```
 
-RateLimitConfig Config object for RateLimiting
+RateLimitConfig type for setting rate limiting params
 
-#### func NewRateLimitConfig
+#### func  NewRateLimitConfig
 
 ```go
 func NewRateLimitConfig(attempts, windowInSeconds, cooldownInSeconds int) *RateLimitConfig
 ```
-NewRateLimitConfig Construct config for RateLimiting
+NewRateLimitConfig to create a new config for rate limiting
 
 ```go
 var ErrBlocked = errors.New("rate limit: blocked")
 ```
-ErrBlocked is returned when ratelimiting kicks in
+ErrBlocked is returned when an attribute is rate limited
 
 #### type RateLimit
 
@@ -38,28 +36,35 @@ type RateLimit struct {
 }
 ```
 
-RateLimit Primary struct for ratelimiting
+RateLimit type for ratelimiting
 
 #### func  NewRateLimit
 
 ```go
 func NewRateLimit(redisPool *redis.Pool, config *config.RateLimitConfig) *RateLimit
 ```
-NewRateLimit Construction of RateLimit using RedisPool and Config
+NewRateLimit func to create a new rate limiting type
 
 #### func (*RateLimit) RateLimitExceeded
 
 ```go
 func (rl *RateLimit) RateLimitExceeded(key string) bool
 ```
-RateLimitExceeded returns state of RateLimit for a key provided
+RateLimitExceeded returns state of a RateLimit for a key given
+
+#### func (*RateLimit) Reset
+
+```go
+func (rl *RateLimit) Reset(key string) error
+```
+Reset func clears the key from rate limiting
 
 #### func (*RateLimit) Run
 
 ```go
 func (rl *RateLimit) Run(key string) error
 ```
-Run applies ratelimiting to the key provided
+Run initiates ratelimiting for the key given
 
 #### type RateLimiter
 
@@ -67,7 +72,8 @@ Run applies ratelimiting to the key provided
 type RateLimiter interface {
 	Run(key string) error
 	RateLimitExceeded(key string) bool
+	Reset(key string) error
 }
 ```
 
-RateLimiter interface which every RateLimit needs to implement
+RateLimiter interface for rate limiting key
