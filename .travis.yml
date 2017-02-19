@@ -1,5 +1,7 @@
 language: go
 go_import_path: go-ratelimit
+
+before_script: sudo redis-server
 addons:
   apt:
     sources:
