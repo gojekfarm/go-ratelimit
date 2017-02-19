@@ -2,7 +2,11 @@
 all: build-deps build fmt vet lint test
 
 GLIDE_NOVENDOR=$(shell glide novendor)
-UNIT_TEST_PACKAGES=$(shell glide novendor | grep -v "featuretests")
+
+setup:
+	mkdir -p $(GOPATH)/bin
+	curl https://glide.sh/get | sh
+	go get -u github.com/golang/lint/golint
 
 build-deps:
 	glide install
@@ -12,7 +16,7 @@ update-deps:
 
 compile:
 	mkdir -p out/
-	go build ./...
+	go build -race ./...
 
 build: build-deps compile fmt vet lint
 
@@ -29,4 +33,4 @@ lint:
 	done
 
 test:
-	ENVIRONMENT=test go test $(UNIT_TEST_PACKAGES) -p=1
+	ENVIRONMENT=test go test -race $(GLIDE_NOVENDOR)
