@@ -87,11 +87,12 @@ func (rl *RateLimit) Reset(key string) error {
 }
 
 func initializeCounterForKey(key string, conn redis.Conn, ttl int) error {
-	if _, err := conn.Do("SET", key, 1); err != nil {
-		return err
-	}
+	conn.Send("MULTI")
+	conn.Send("SET", key, 1)
+	conn.Send("EXPIRE", key, ttl)
 
-	if _, err := conn.Do("EXPIRE", key, ttl); err != nil {
+	_, err := conn.Do("EXEC")
+	if err != nil {
 		return err
 	}
 
@@ -107,11 +108,12 @@ func incrementCounterForKey(key string, conn redis.Conn) error {
 }
 
 func initializeCooldownWindowForKey(key string, conn redis.Conn, ttl int) error {
-	if _, err := conn.Do("INCR", key); err != nil {
-		return err
-	}
+	conn.Send("MULTI")
+	conn.Send("INCR", key)
+	conn.Send("EXPIRE", key, ttl)
 
-	if _, err := conn.Do("EXPIRE", key, ttl); err != nil {
+	_, err := conn.Do("EXEC")
+	if err != nil {
 		return err
 	}
 
