@@ -85,8 +85,8 @@ func (suite *RateLimitSuite) TestKeyExistsAndAttemptIsValid() {
 	conn := redisPool.Get()
 	result, err := redis.Int(conn.Do("GET", "foo"))
 	require.NoError(suite.T(), err, "failed to get value from redis")
-	require.NotNil(suite.T(), result)
 
+	require.NotNil(suite.T(), result)
 	assert.Equal(suite.T(), allowedLoginAttempts, result)
 }
 
@@ -105,28 +105,18 @@ func (suite *RateLimitSuite) TestKeyExistsAndJustExceededAttemptThreshold() {
 	require.NoError(suite.T(), err, "should not fail to rate limit")
 
 	err = rl.Run("foo")
-	require.Error(suite.T(), err, "should have blocked")
+	require.NoError(suite.T(), err, "should not have thrown an error")
 
-	assert.Equal(suite.T(), ErrBlocked, err)
-}
+	conn := redisPool.Get()
+	result, err := redis.Int(conn.Do("GET", "foo"))
+	require.NoError(suite.T(), err, "failed to get value from redis")
 
-func (suite *RateLimitSuite) TestKeyExistsAndHasWayExceededAttemptThreshold() {
-	redisPool := suite.redisPool
-	redisConfig := suite.redisConfig
+	assert.Equal(suite.T(), allowedLoginAttempts+1, result)
 
-	rl := RateLimit{redisPool: redisPool, config: suite.redisConfig}
+	expiry, err := redis.Int(conn.Do("TTL", "foo"))
+	require.NoError(suite.T(), err, "failed to get value from redis")
 
-	var err error
-	allowedLoginAttempts := redisConfig.Attempts
-
-	for i := 0; i < allowedLoginAttempts+1; i++ {
-		err = rl.Run("foo")
-	}
-
-	err = rl.Run("foo")
-	require.Error(suite.T(), err, "should have blocked")
-
-	assert.Equal(suite.T(), ErrBlocked, err)
+	assert.Equal(suite.T(), redisConfig.CooldownInSeconds, expiry)
 }
 
 func (suite *RateLimitSuite) TestRateLimitNotExceeded() {
@@ -138,26 +128,23 @@ func (suite *RateLimitSuite) TestRateLimitNotExceeded() {
 	key := "test_key"
 
 	assert.False(suite.T(), rl.RateLimitExceeded(key))
-
-	initializeCounterForKey(key, redisPool.Get(), 2)
-	incrementCounterForKey(key, redisPool.Get())
-	incrementCounterForKey(key, redisPool.Get())
-
-	assert.False(suite.T(), rl.RateLimitExceeded(key))
 }
 
 func (suite *RateLimitSuite) TestRateLimitExceeded() {
 	redisPool := suite.redisPool
 	redisConfig := suite.redisConfig
 
-	rl := RateLimit{redisPool: redisPool, config: redisConfig}
+	var err error
+	allowedLoginAttempts := redisConfig.Attempts
 
 	key := "test_key"
 
-	initializeCounterForKey(key, redisPool.Get(), 2)
-	incrementCounterForKey(key, redisPool.Get())
-	incrementCounterForKey(key, redisPool.Get())
-	incrementCounterForKey(key, redisPool.Get())
+	rl := RateLimit{redisPool: redisPool, config: redisConfig}
+
+	for i := 0; i <= allowedLoginAttempts; i++ {
+		err = rl.Run(key)
+	}
+	require.NoError(suite.T(), err, "should not fail to rate limit")
 
 	assert.True(suite.T(), rl.RateLimitExceeded(key))
 }
@@ -166,17 +153,19 @@ func (suite *RateLimitSuite) TestResetRateLimit() {
 	redisPool := suite.redisPool
 	redisConfig := suite.redisConfig
 
+	allowedLoginAttempts := redisConfig.Attempts
+
+	var err error
 	rl := RateLimit{redisPool: redisPool, config: redisConfig}
 
 	key := "test_key"
 
 	assert.False(suite.T(), rl.RateLimitExceeded(key))
 
-	initializeCounterForKey(key, redisPool.Get(), 2)
-
-	for i := 0; i < suite.redisConfig.Attempts; i++ {
-		incrementCounterForKey(key, redisPool.Get())
+	for i := 0; i <= allowedLoginAttempts; i++ {
+		err = rl.Run(key)
 	}
+	require.NoError(suite.T(), err, "should not fail to rate limit")
 
 	require.True(suite.T(), rl.RateLimitExceeded(key))
 
