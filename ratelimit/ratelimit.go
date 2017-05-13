@@ -3,6 +3,7 @@ package ratelimit
 import (
 	"errors"
 	"go-ratelimit/config"
+	"strconv"
 
 	"github.com/garyburd/redigo/redis"
 )
@@ -36,24 +37,34 @@ func (rl *RateLimit) Run(key string) error {
 	conn := rl.redisPool.Get()
 	defer conn.Close()
 
-	value, err := redis.Int(conn.Do("GET", key))
-	if err != nil && err != redis.ErrNil {
+	conn.Send("MULTI")
+	conn.Send("INCR", key)
+	conn.Send("EXPIRE", key, rl.config.WindowInSeconds)
+
+	_, err := conn.Do("EXEC")
+	if err != nil {
 		return err
 	}
 
-	if value == 0 {
-		return initializeCounterForKey(key, conn, rl.config.WindowInSeconds)
+	value, err := redis.String(conn.Do("GET", key))
+	if err != nil {
+		return err
 	}
 
-	if value < rl.config.Attempts {
-		return incrementCounterForKey(key, conn)
+	result, err := strconv.Atoi(value)
+	if err != nil {
+		return err
 	}
 
-	if value == rl.config.Attempts {
-		return initializeCooldownWindowForKey(key, conn, rl.config.CooldownInSeconds)
+	if result > rl.config.Attempts {
+		_, err := conn.Do("EXPIRE", key, rl.config.CooldownInSeconds)
+		if err != nil {
+			return err
+		}
+
 	}
 
-	return ErrBlocked
+	return nil
 }
 
 // RateLimitExceeded returns state of a RateLimit for a key given
@@ -84,38 +95,4 @@ func (rl *RateLimit) Reset(key string) error {
 	}
 
 	return nil
-}
-
-func initializeCounterForKey(key string, conn redis.Conn, ttl int) error {
-	conn.Send("MULTI")
-	conn.Send("SET", key, 1)
-	conn.Send("EXPIRE", key, ttl)
-
-	_, err := conn.Do("EXEC")
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func incrementCounterForKey(key string, conn redis.Conn) error {
-	if _, err := conn.Do("INCR", key); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func initializeCooldownWindowForKey(key string, conn redis.Conn, ttl int) error {
-	conn.Send("MULTI")
-	conn.Send("INCR", key)
-	conn.Send("EXPIRE", key, ttl)
-
-	_, err := conn.Do("EXEC")
-	if err != nil {
-		return err
-	}
-
-	return ErrBlocked
 }
