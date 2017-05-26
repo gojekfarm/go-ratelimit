@@ -2,7 +2,6 @@ package ratelimit
 
 import (
 	"errors"
-	"go-ratelimit/config"
 	"strconv"
 
 	"github.com/garyburd/redigo/redis"
@@ -21,11 +20,11 @@ type RateLimiter interface {
 // RateLimit type for ratelimiting
 type RateLimit struct {
 	redisPool *redis.Pool
-	config    *config.RateLimitConfig
+	config    *RateLimitConfig
 }
 
 // NewRateLimit func to create a new rate limiting type
-func NewRateLimit(redisPool *redis.Pool, config *config.RateLimitConfig) *RateLimit {
+func NewRateLimit(redisPool *redis.Pool, config *RateLimitConfig) *RateLimit {
 	return &RateLimit{
 		redisPool: redisPool,
 		config:    config,

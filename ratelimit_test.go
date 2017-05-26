@@ -1,7 +1,6 @@
 package ratelimit
 
 import (
-	"go-ratelimit/config"
 	"testing"
 
 	"github.com/garyburd/redigo/redis"
@@ -13,7 +12,7 @@ import (
 type RateLimitSuite struct {
 	suite.Suite
 	redisPool   *redis.Pool
-	redisConfig *config.RateLimitConfig
+	redisConfig *RateLimitConfig
 }
 
 func testRedisPool() *redis.Pool {
@@ -30,7 +29,7 @@ func testRedisPool() *redis.Pool {
 }
 
 func (suite *RateLimitSuite) SetupSuite() {
-	suite.redisConfig = config.NewRateLimitConfig(3, 15, 60)
+	suite.redisConfig = NewRateLimitConfig(3, 15, 60)
 	suite.redisPool = testRedisPool()
 }
 
