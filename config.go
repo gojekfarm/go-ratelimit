@@ -1,4 +1,4 @@
-package config
+package ratelimit
 
 // RateLimitConfig type for setting rate limiting params
 type RateLimitConfig struct {
