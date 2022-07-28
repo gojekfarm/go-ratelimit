@@ -1,4 +1,4 @@
-package: github.com/gojek-engineering/go-ratelimit
+package: github.com/gojekfarm/go-ratelimit
 import:
 - package: github.com/garyburd/redigo
   version: ^1.0.0

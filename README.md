@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/gojek-engineering/go-ratelimit.svg?branch=master)](https://travis-ci.org/gojek-engineering/go-ratelimit)
+[![Build Status](https://travis-ci.org/gojekfarm/go-ratelimit.svg?branch=master)](https://travis-ci.org/gojekfarm/go-ratelimit)
 
 # ratelimit
 --
