@@ -79,3 +79,6 @@ type RateLimiter interface {
 ```
 
 RateLimiter interface for rate limiting key
+
+```go
+Use clusterratelimiter.NewRateLimit if you are using Redis Cluster
