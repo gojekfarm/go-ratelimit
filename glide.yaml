@@ -1,6 +1,6 @@
 package: github.com/gojekfarm/go-ratelimit
 import:
-- package: github.com/garyburd/redigo
+- package: github.com/gomodule/redigo
   version: ^1.0.0
   subpackages:
   - redis

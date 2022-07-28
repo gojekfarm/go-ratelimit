@@ -1,10 +1,9 @@
-hash: 0fe817b9a9e7afdcc3ec000cfdd8df256d7dee80d537dd7da9bf3f1246e1e601
-updated: 2017-05-26T14:15:30.167877631+05:30
+hash: 5c7bd68e29c02959fe27683e44571104a098244a6830c614bfec035a1e20acc8
+updated: 2020-02-18T12:08:41.566305+07:00
 imports:
-- name: github.com/garyburd/redigo
-  version: 433969511232c397de61b1442f9fd49ec06ae9ba
+- name: github.com/gomodule/redigo
+  version: 02dc2736dbc3a4a56907b0d5a9fead2f71b499db
   subpackages:
-  - internal
   - redis
 testImports:
 - name: github.com/davecgh/go-spew
@@ -16,8 +15,10 @@ testImports:
   subpackages:
   - difflib
 - name: github.com/stretchr/testify
-  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
+  version: 221dbe5ed46703ee255b1da0dec05086f5035f62
   subpackages:
   - assert
   - require
   - suite
+- name: gopkg.in/yaml.v2
+  version: 53403b58ad1b561927d19068c655246f2db79d48

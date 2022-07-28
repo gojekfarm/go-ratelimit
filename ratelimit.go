@@ -4,7 +4,7 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/garyburd/redigo/redis"
+	"github.com/gomodule/redigo/redis"
 )
 
 // ErrBlocked is returned when an attribute is rate limited
